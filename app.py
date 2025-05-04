@@ -23,7 +23,7 @@ if "chat_history" not in st.session_state:
 if st.button("🧽 Borrar conversación"):
     st.session_state.chat_history = []
 
-# Entrada del usuario (clave: input_area)
+# Entrada del usuario (no se limpia automáticamente)
 user_input = st.text_area(
     "📥 Pegá aquí tus resultados de análisis o métricas:",
     key="input_area",
@@ -55,9 +55,6 @@ Responde en español, de forma ordenada y usando bullets o subtítulos si es pos
         with st.spinner("Analizando..."):
             response = llm(messages)
             st.session_state.chat_history.append((user_input, response.content))
-
-        # ✅ Limpiar el campo después de enviar
-        st.session_state.input_area = ""
     else:
         st.warning("Por favor, pegá algún contenido antes de interpretar.")
 
@@ -78,6 +75,6 @@ if st.session_state.chat_history:
         st.markdown("💬 **Respuesta:**")
         if highlight:
             st.markdown("⚠️ **Se detectaron posibles alertas o caídas en los datos.**")
-        
+
         st.markdown(a)
         st.markdown("---")
