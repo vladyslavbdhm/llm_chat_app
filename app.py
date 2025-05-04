@@ -3,7 +3,7 @@ import os
 from langchain.chat_models import ChatOpenAI
 from langchain.schema import SystemMessage, HumanMessage
 
-# Leer la clave desde secrets
+# Leer la clave desde secrets (Streamlit Cloud)
 os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
 
 # Configuración de la página
@@ -23,21 +23,12 @@ if "chat_history" not in st.session_state:
 if st.button("🧽 Borrar conversación"):
     st.session_state.chat_history = []
 
-# Manejo del input con borrado seguro
-if st.session_state.get("clear_input"):
-    user_input = st.text_area(
-        "📥 Pegá aquí tus resultados de análisis o métricas:",
-        value="",
-        key="input_area",
-        height=150
-    )
-    st.session_state["clear_input"] = False
-else:
-    user_input = st.text_area(
-        "📥 Pegá aquí tus resultados de análisis o métricas:",
-        key="input_area",
-        height=150
-    )
+# Área de texto del usuario
+user_input = st.text_area(
+    "📥 Pegá aquí tus resultados de análisis o métricas:",
+    key="input_area",
+    height=150
+)
 
 # Botón para interpretar
 if st.button("Interpretar"):
@@ -65,22 +56,22 @@ Responde en español, de forma ordenada y usando bullets o subtítulos si es pos
             response = llm(messages)
             st.session_state.chat_history.append((user_input, response.content))
 
-        # 🧽 Solicitar reinicio y borrado del input
-        st.session_state["clear_input"] = True
-        st.experimental_rerun()
+        # ✅ Limpiar el campo de texto (modo seguro)
+        st.session_state.input_area = ""
     else:
         st.warning("Por favor, pegá algún contenido antes de interpretar.")
 
-# Mostrar historial formateado
+# Mostrar historial
 if st.session_state.chat_history:
     st.divider()
     st.subheader("🗂 Historial de Interpretaciones")
+
     for idx, (q, a) in enumerate(reversed(st.session_state.chat_history), 1):
         st.markdown(f"**🔎 Consulta {idx}:**")
-        st.write(f"📝 **Entrada:**")
+        st.write("📝 **Entrada:**")
         st.code(q, language="markdown")
 
-        # Detectar términos críticos
+        # Detectar palabras críticas
         alert_words = ["descenso", "caída", "disminución", "alarma", "riesgo", "alerta", "bajo"]
         highlight = any(word in a.lower() for word in alert_words)
 
