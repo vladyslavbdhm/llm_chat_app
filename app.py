@@ -23,11 +23,16 @@ if "chat_history" not in st.session_state:
 if st.button("🧽 Borrar conversación"):
     st.session_state.chat_history = []
 
-# Entrada del usuario
-user_input = st.text_area("📥 Pegá aquí tus resultados de análisis o métricas:")
+# Entrada del usuario con estado
+st.text_area(
+    "📥 Pegá aquí tus resultados de análisis o métricas:",
+    key="user_input",
+    height=150
+)
 
 # Botón para interpretar
 if st.button("Interpretar"):
+    user_input = st.session_state.user_input.strip()
     if user_input:
         llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
 
@@ -42,19 +47,21 @@ Tu tarea es explicar en lenguaje claro y breve:
 Responde en español, de forma ordenada y usando bullets o subtítulos si es posible.
 """)]
 
-        # Agregar historial como contexto
         for user_msg, ai_msg in st.session_state.chat_history:
             messages.append(HumanMessage(content=user_msg))
-            messages.append(HumanMessage(content=ai_msg))  # opción simple si no usamos AIMessage
+            messages.append(HumanMessage(content=ai_msg))
 
-        # Mensaje actual del usuario
         messages.append(HumanMessage(content=user_input))
 
         with st.spinner("Analizando..."):
             response = llm(messages)
             st.session_state.chat_history.append((user_input, response.content))
+
+        # 🧽 Limpiar el campo de entrada después de procesar
+        st.session_state.user_input = ""
     else:
         st.warning("Por favor, pegá algún contenido antes de interpretar.")
+
 
 # Mostrar historial con formato visual
 if st.session_state.chat_history:
