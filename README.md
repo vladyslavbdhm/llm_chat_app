@@ -8,9 +8,9 @@ Esta aplicación web utiliza un modelo de lenguaje (LLM) para interpretar métri
 
 El modelo recibe como entrada texto con resultados de análisis (por ejemplo: KPIs, tablas de datos, indicadores estadísticos o resúmenes de Power BI / Google Sheets), y genera una interpretación en español:
 
-- Explica qué indican los datos
-- Detecta anomalías o puntos llamativos
-- Presenta conclusiones clave en lenguaje claro
+- Explica qué indican los datos.
+- Detecta anomalías o puntos llamativos.
+- Presenta conclusiones clave en lenguaje claro.
 
 ---
 
@@ -24,14 +24,16 @@ El modelo recibe como entrada texto con resultados de análisis (por ejemplo: KP
 
 ## ▶️ ¿Cómo usar esta aplicación?
 
-### Opción 1: **Desde la nube (recomendado)**
+### Opción 1: Desde la nube (recomendado)
+
 La app está publicada en Streamlit Cloud y accesible desde:
 
 👉 [https://llmchatapp-vladyslav-dodonov.streamlit.app/](https://llmchatapp-vladyslav-dodonov.streamlit.app/)
 
-### Opción 2: **Ejecutar localmente**
+### Opción 2: Ejecutar localmente
 
 1. Clonar el repositorio:
+
 ```bash
 git clone https://github.com/tuusuario/llm_chat_app.git
 cd llm_chat_app
