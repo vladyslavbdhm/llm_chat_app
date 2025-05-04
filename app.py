@@ -23,7 +23,7 @@ if "chat_history" not in st.session_state:
 if st.button("🧽 Borrar conversación"):
     st.session_state.chat_history = []
 
-# Entrada del usuario
+# Entrada del usuario (clave: input_area)
 user_input = st.text_area(
     "📥 Pegá aquí tus resultados de análisis o métricas:",
     key="input_area",
@@ -35,7 +35,7 @@ if st.button("Interpretar"):
     if user_input.strip():
         llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
 
-        # Crear lista de mensajes desde el historial
+        # Crear mensajes con historial
         messages = [SystemMessage(content="""
 Eres un experto en análisis de datos. Recibirás resultados estadísticos, métricas de negocio o resúmenes de dashboards.
 Tu tarea es explicar en lenguaje claro y breve:
@@ -55,6 +55,9 @@ Responde en español, de forma ordenada y usando bullets o subtítulos si es pos
         with st.spinner("Analizando..."):
             response = llm(messages)
             st.session_state.chat_history.append((user_input, response.content))
+
+        # ✅ Limpiar el campo después de enviar
+        st.session_state.input_area = ""
     else:
         st.warning("Por favor, pegá algún contenido antes de interpretar.")
 
@@ -68,14 +71,13 @@ if st.session_state.chat_history:
         st.write("📝 **Entrada:**")
         st.code(q, language="markdown")
 
-        # Detectar palabras críticas
+        # Detectar palabras clave críticas
         alert_words = ["descenso", "caída", "disminución", "alarma", "riesgo", "alerta", "bajo"]
         highlight = any(word in a.lower() for word in alert_words)
 
         st.markdown("💬 **Respuesta:**")
         if highlight:
             st.markdown("⚠️ **Se detectaron posibles alertas o caídas en los datos.**")
-        else:
-            st.markdown(a)
-
+        
+        st.markdown(a)
         st.markdown("---")
