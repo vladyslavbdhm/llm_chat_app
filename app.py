@@ -23,20 +23,28 @@ if "chat_history" not in st.session_state:
 if st.button("🧽 Borrar conversación"):
     st.session_state.chat_history = []
 
-# Área de entrada con estado
-user_input = st.text_area(
-    "📥 Pegá aquí tus resultados de análisis o métricas:",
-    value="",
-    key="input_area",
-    height=150
-)
+# Manejo del input con borrado seguro
+if st.session_state.get("clear_input"):
+    user_input = st.text_area(
+        "📥 Pegá aquí tus resultados de análisis o métricas:",
+        value="",
+        key="input_area",
+        height=150
+    )
+    st.session_state["clear_input"] = False
+else:
+    user_input = st.text_area(
+        "📥 Pegá aquí tus resultados de análisis o métricas:",
+        key="input_area",
+        height=150
+    )
 
 # Botón para interpretar
 if st.button("Interpretar"):
     if user_input.strip():
         llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
 
-        # Crear lista de mensajes desde el historial (para contexto)
+        # Crear lista de mensajes desde el historial
         messages = [SystemMessage(content="""
 Eres un experto en análisis de datos. Recibirás resultados estadísticos, métricas de negocio o resúmenes de dashboards.
 Tu tarea es explicar en lenguaje claro y breve:
@@ -47,20 +55,19 @@ Tu tarea es explicar en lenguaje claro y breve:
 Responde en español, de forma ordenada y usando bullets o subtítulos si es posible.
 """)]
 
-        # Añadir historial como contexto
         for user_msg, ai_msg in st.session_state.chat_history:
             messages.append(HumanMessage(content=user_msg))
-            messages.append(HumanMessage(content=ai_msg))  # opción rápida, aunque no es AIMessage real
+            messages.append(HumanMessage(content=ai_msg))
 
-        # Agregar mensaje actual
         messages.append(HumanMessage(content=user_input))
 
         with st.spinner("Analizando..."):
             response = llm(messages)
             st.session_state.chat_history.append((user_input, response.content))
 
-        # 🧽 Limpiar el input después de procesar
-        st.session_state.input_area = ""
+        # 🧽 Solicitar reinicio y borrado del input
+        st.session_state["clear_input"] = True
+        st.experimental_rerun()
     else:
         st.warning("Por favor, pegá algún contenido antes de interpretar.")
 
