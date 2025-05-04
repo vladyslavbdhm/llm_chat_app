@@ -3,7 +3,7 @@ import os
 from langchain.chat_models import ChatOpenAI
 from langchain.schema import SystemMessage, HumanMessage
 
-# Leer la clave desde secrets (Streamlit Cloud)
+# Leer la clave desde secrets (para Streamlit Cloud)
 os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
 
 # Configuración de la página
@@ -23,7 +23,7 @@ if "chat_history" not in st.session_state:
 if st.button("🧽 Borrar conversación"):
     st.session_state.chat_history = []
 
-# Área de texto del usuario
+# Entrada del usuario
 user_input = st.text_area(
     "📥 Pegá aquí tus resultados de análisis o métricas:",
     key="input_area",
@@ -55,9 +55,6 @@ Responde en español, de forma ordenada y usando bullets o subtítulos si es pos
         with st.spinner("Analizando..."):
             response = llm(messages)
             st.session_state.chat_history.append((user_input, response.content))
-
-        # ✅ Limpiar el campo de texto (modo seguro)
-        st.session_state.input_area = ""
     else:
         st.warning("Por favor, pegá algún contenido antes de interpretar.")
 
