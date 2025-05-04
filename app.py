@@ -74,7 +74,7 @@ if st.session_state.chat_history:
 
         st.markdown("💬 **Respuesta:**")
         if highlight:
-            st.markdown(f"<div style='color: red'>{a}</div>", unsafe_allow_html=True)
+            st.markdown("⚠️ **Se detectaron posibles alertas o caídas en los datos.**")
         else:
             st.markdown(a)
 
