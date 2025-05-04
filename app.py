@@ -6,7 +6,7 @@ from langchain.schema import SystemMessage, HumanMessage
 # Leer la clave desde secrets
 os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
 
-# Página
+# Configuración de la página
 st.set_page_config(page_title="Analizador de Datos con LLM", page_icon="📊")
 st.title("📊 Interpretador de Resultados de Datos con LLM")
 
@@ -23,20 +23,20 @@ if "chat_history" not in st.session_state:
 if st.button("🧽 Borrar conversación"):
     st.session_state.chat_history = []
 
-# Entrada del usuario con estado
-st.text_area(
+# Área de entrada con estado
+user_input = st.text_area(
     "📥 Pegá aquí tus resultados de análisis o métricas:",
-    key="user_input",
+    value="",
+    key="input_area",
     height=150
 )
 
 # Botón para interpretar
 if st.button("Interpretar"):
-    user_input = st.session_state.user_input.strip()
-    if user_input:
+    if user_input.strip():
         llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
 
-        # Crear lista de mensajes desde el historial
+        # Crear lista de mensajes desde el historial (para contexto)
         messages = [SystemMessage(content="""
 Eres un experto en análisis de datos. Recibirás resultados estadísticos, métricas de negocio o resúmenes de dashboards.
 Tu tarea es explicar en lenguaje claro y breve:
@@ -47,23 +47,24 @@ Tu tarea es explicar en lenguaje claro y breve:
 Responde en español, de forma ordenada y usando bullets o subtítulos si es posible.
 """)]
 
+        # Añadir historial como contexto
         for user_msg, ai_msg in st.session_state.chat_history:
             messages.append(HumanMessage(content=user_msg))
-            messages.append(HumanMessage(content=ai_msg))
+            messages.append(HumanMessage(content=ai_msg))  # opción rápida, aunque no es AIMessage real
 
+        # Agregar mensaje actual
         messages.append(HumanMessage(content=user_input))
 
         with st.spinner("Analizando..."):
             response = llm(messages)
             st.session_state.chat_history.append((user_input, response.content))
 
-        # 🧽 Limpiar el campo de entrada después de procesar
-        st.session_state.user_input = ""
+        # 🧽 Limpiar el input después de procesar
+        st.session_state.input_area = ""
     else:
         st.warning("Por favor, pegá algún contenido antes de interpretar.")
 
-
-# Mostrar historial con formato visual
+# Mostrar historial formateado
 if st.session_state.chat_history:
     st.divider()
     st.subheader("🗂 Historial de Interpretaciones")
@@ -72,7 +73,7 @@ if st.session_state.chat_history:
         st.write(f"📝 **Entrada:**")
         st.code(q, language="markdown")
 
-        # 🔍 Detección simple de términos críticos
+        # Detectar términos críticos
         alert_words = ["descenso", "caída", "disminución", "alarma", "riesgo", "alerta", "bajo"]
         highlight = any(word in a.lower() for word in alert_words)
 
