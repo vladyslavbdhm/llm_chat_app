@@ -3,3 +3,4 @@ streamlit
 openai
 langchain
 langchain-community
+tabulate
