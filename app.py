@@ -1,99 +1,112 @@
 import streamlit as st
 import os
 import pandas as pd
+import matplotlib.pyplot as plt
 from langchain.chat_models import ChatOpenAI
 from langchain.schema import SystemMessage, HumanMessage
 
 # Leer clave API
 os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
 
-# Configuración general
+# Configurar página
 st.set_page_config(page_title="Analizador de Datos con LLM", page_icon="📊")
-st.title("📊 Interpretador de Resultados de Datos con LLM")
+st.title("📊 Interpretador y Explorador de Datos con LLM")
 
 st.markdown("""
-Este asistente te ayuda a **interpretar resultados de análisis de datos**.
-Pegá métricas, KPIs, estadísticas o subí un archivo `.csv` con datos, y recibirás una explicación clara en lenguaje natural.
+Subí un archivo `.csv` con datos de negocio o resultados analíticos. El asistente realizará un análisis exploratorio (EDA) y, si lo deseás, una interpretación con inteligencia artificial.
 """)
 
-# Mostrar ejemplo dentro de un expander
-with st.expander("📌 Ver ejemplo de entrada"):
-    st.markdown("""
-    ```
-    Promedio de ventas: 1245 €
-    Desviación estándar: 232 €
-    Ventas de abril: 1020 € (-15% respecto a marzo)
-    Top productos: A (1520 €), B (1340 €), C (900 €)
-    ```
-    """)
-
-# Inicializar historial si no existe
+# Inicializar historial
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
-# Botón para limpiar conversación
+# Botón para limpiar historial
 if st.button("🧽 Borrar conversación"):
     st.session_state.chat_history = []
 
-# Carga de archivo CSV
-uploaded_file = st.file_uploader("📎 O subir un archivo CSV con métricas", type="csv")
-csv_text = ""
+# Subida de archivo
+uploaded_file = st.file_uploader("📎 Subí un archivo CSV", type="csv")
 
-if uploaded_file is not None:
-    df = pd.read_csv(uploaded_file)
-    st.subheader("📄 Vista previa del archivo:")
-    st.dataframe(df)
+# Si se sube un archivo
+if uploaded_file:
+    df_raw = pd.read_csv(uploaded_file)
 
-    # Extraer primeras filas como markdown
-    csv_text = df.head(5).to_markdown(index=False)
+    st.subheader("📄 Vista previa del archivo")
+    st.dataframe(df_raw.head(10))
 
-    st.markdown("🧾 Fragmento de datos extraído para el modelo:")
-    st.code(csv_text, language="markdown")
+    # Filtrar filas sin nulos y limitar a 100
+    df_clean = df_raw.dropna().copy()
+    if len(df_clean) > 100:
+        df_clean = df_clean.head(100)
 
-# Entrada de texto manual
-user_input = st.text_area(
-    "✏️ También podés escribir o pegar resultados directamente:",
-    key="input_area",
-    height=150
-)
+    st.success(f"✅ Usando {len(df_clean)} filas sin valores nulos para el análisis automático.")
 
-# Botón para interpretar
-if st.button("Interpretar"):
-    if user_input.strip() or csv_text:
-        llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
+    st.markdown("---")
 
-        # Prompt de sistema
-        messages = [SystemMessage(content="""
-Eres un experto en análisis de datos. Recibirás resultados estadísticos, métricas de negocio o resúmenes de dashboards.
-Tu tarea es explicar en lenguaje claro y breve:
-1. Qué indican los datos.
-2. Si hay algo inusual.
-3. Cualquier conclusión que se pueda sacar.
+    # Sección de EDA
+    st.subheader("🔍 Exploración de Datos (EDA)")
 
-Responde en español, de forma ordenada y usando bullets o subtítulos si es posible.
-""")]
+    st.write("**📐 Dimensiones del archivo:**")
+    st.write(f"{df_raw.shape[0]} filas × {df_raw.shape[1]} columnas")
 
-        # Historial previo (para contexto)
-        for user_msg, ai_msg in st.session_state.chat_history:
-            messages.append(HumanMessage(content=user_msg))
-            messages.append(HumanMessage(content=ai_msg))
+    st.write("**📋 Columnas:**")
+    st.write(df_raw.columns.tolist())
 
-        # Construir input combinado (csv + texto manual)
-        combined_input = ""
-        if csv_text:
-            combined_input += f"Datos del archivo:\n{csv_text}\n\n"
-        if user_input.strip():
-            combined_input += f"Comentarios adicionales:\n{user_input.strip()}"
+    st.write("**🕳️ Valores nulos por columna:**")
+    st.write(df_raw.isnull().sum())
 
-        messages.append(HumanMessage(content=combined_input))
+    st.write("**📊 Estadísticas numéricas:**")
+    st.write(df_raw.describe())
 
-        with st.spinner("Analizando..."):
-            response = llm(messages)
-            st.session_state.chat_history.append((combined_input, response.content))
+    # Histograma
+    st.subheader("📈 Distribuciones de columnas numéricas")
+    numeric_cols = df_clean.select_dtypes(include="number").columns.tolist()
+
+    if numeric_cols:
+        for col in numeric_cols:
+            fig, ax = plt.subplots()
+            df_clean[col].hist(bins=20, ax=ax)
+            ax.set_title(f"Distribución de {col}")
+            st.pyplot(fig)
     else:
-        st.warning("Por favor, escribí algo o subí un archivo antes de interpretar.")
+        st.info("No se encontraron columnas numéricas para graficar.")
 
-# Mostrar historial
+    st.markdown("---")
+
+    # Entrada de texto opcional
+    user_input = st.text_area("✏️ Comentarios o preguntas adicionales (opcional):", key="input_area")
+
+    # Botón para interpretar
+    if st.button("🤖 Interpretar con LLM"):
+        if not df_clean.empty:
+            # Convertir a texto
+            csv_text = df_clean.to_csv(index=False)
+
+            # Armar input
+            full_input = f"""Datos del archivo (primeras {len(df_clean)} filas sin nulos):\n{csv_text}"""
+            if user_input.strip():
+                full_input += f"\n\nComentarios adicionales:\n{user_input.strip()}"
+
+            llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
+
+            messages = [
+                SystemMessage(content="""
+Eres un experto en análisis de datos. Recibirás datos tabulados o métricas de negocio.
+Tu tarea es:
+- Detectar patrones o irregularidades
+- Explicar tendencias
+- Sugerir hipótesis o conclusiones
+Responde en español, de forma clara y estructurada.
+"""),
+                HumanMessage(content=full_input)
+            ]
+
+            with st.spinner("Analizando con LLM..."):
+                response = llm(messages)
+                st.session_state.chat_history.append((full_input, response.content))
+        else:
+            st.warning("No hay suficientes datos sin nulos para enviar al modelo.")
+
 # Mostrar historial
 if st.session_state.chat_history:
     st.divider()
@@ -101,10 +114,9 @@ if st.session_state.chat_history:
 
     for idx, (q, a) in enumerate(reversed(st.session_state.chat_history), 1):
         st.markdown(f"**🔎 Consulta {idx}:**")
-        st.write("📝 **Entrada:**")
-        st.code(q, language="markdown")
+        st.write("📝 **Entrada enviada:**")
+        st.code(q[:1500] + "\n... (truncado)" if len(q) > 1500 else q, language="markdown")
 
         st.markdown("💬 **Respuesta:**")
         st.markdown(a)
         st.markdown("---")
-
