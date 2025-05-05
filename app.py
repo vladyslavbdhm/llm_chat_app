@@ -98,14 +98,21 @@ Eres un experto en análisis de datos. Vas a recibir una pregunta relacionada co
 # Botón: Métricas básicas (EDA)
 if st.button("📊 Ver métricas básicas") and st.session_state.df_clean is not None:
     df_clean = st.session_state.df_clean
-    st.subheader("📐 Info del DataFrame")
-    buffer = StringIO()
-    df_clean.info(buf=buffer)
-    st.text(buffer.getvalue())
 
+    # Mostrar df.info() como tabla
+    st.subheader("📐 Estructura del DataFrame")
+    df_info = pd.DataFrame({
+        "Columna": df_clean.columns,
+        "Non-Nulls": df_clean.notnull().sum().values,
+        "Dtype": df_clean.dtypes.astype(str).values
+    })
+    st.dataframe(df_info)
+
+    # Nulos
     st.subheader("🕳️ Valores nulos por columna")
     st.dataframe(df_clean.isnull().sum().to_frame("Nulos"))
 
+    # Estadísticas
     st.subheader("📈 Estadísticas numéricas")
     st.dataframe(df_clean.describe().T)
 
@@ -122,6 +129,18 @@ if st.button("📈 Mostrar gráficos") and st.session_state.df_clean is not None
             st.pyplot(fig)
     else:
         st.info("No hay columnas numéricas para graficar.")
+
+    st.subheader("📊 Gráficos de frecuencia por columnas categóricas")
+    cat_cols = st.session_state.df_clean.select_dtypes(include=["object", "category"]).columns.tolist()
+
+    if cat_cols:
+        for col in cat_cols:
+            fig, ax = plt.subplots()
+            st.session_state.df_clean[col].value_counts().head(10).sort_values().plot(kind="barh", ax=ax)
+            ax.set_title(f"Top categorías en {col}")
+            st.pyplot(fig)
+    else:
+        st.info("No hay columnas categóricas para graficar.")
 
 # Mostrar historial de conversación
 if st.session_state.chat_history:
