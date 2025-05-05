@@ -4,21 +4,24 @@ Esta aplicación web utiliza un modelo de lenguaje (LLM) para interpretar métri
 
 ---
 
-## 🎯 Propósito
+## 🎯 ¿Qué hace esta app?
 
-El modelo recibe como entrada texto con resultados de análisis (por ejemplo: KPIs, tablas de datos, indicadores estadísticos o resúmenes de Power BI / Google Sheets), y genera una interpretación en español:
-
-- Explica qué indican los datos.
-- Detecta anomalías o puntos llamativos.
-- Presenta conclusiones clave en lenguaje claro.
+- 📥 Permite subir archivos `.csv` o ingresar texto manual
+- 🤖 Genera automáticamente **insights generales** con IA (modelo GPT)
+- 💬 Permite hacer **preguntas consecutivas** sobre los datos (mantiene historial)
+- 📊 Muestra un **resumen exploratorio** (EDA) del dataset
+- 📈 Permite generar **gráficos automáticos** para columnas numéricas
 
 ---
 
+
 ## 🧠 Tecnología utilizada
 
-- [Streamlit](https://streamlit.io/)
-- [LangChain](https://www.langchain.com/)
-- OpenAI API (`gpt-3.5-turbo`)
+- [Streamlit](https://streamlit.io/) – interfaz web interactiva
+- [Pandas](https://pandas.pydata.org/) – carga y análisis de datos
+- [Matplotlib](https://matplotlib.org/) – generación de gráficos
+- [LangChain](https://www.langchain.com/) – estructura conversacional con LLM
+- [OpenAI](https://openai.com/) – modelo **GPT-3.5-turbo** para insights y preguntas
 
 ---
 
