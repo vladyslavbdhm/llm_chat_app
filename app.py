@@ -99,6 +99,28 @@ Eres un experto en análisis de datos. Vas a recibir una pregunta relacionada co
 if st.button("📊 Ver métricas básicas") and st.session_state.df_clean is not None:
     df_clean = st.session_state.df_clean
 
+    st.subheader("📋 Resumen general")
+
+    total_rows = df_clean.shape[0]
+    total_cols = df_clean.shape[1]
+    total_cells = total_rows * total_cols
+    total_nulls = df_clean.isnull().sum().sum()
+    percent_nulls = (total_nulls / total_cells) * 100
+    num_cols = df_clean.select_dtypes(include="number").columns.tolist()
+    cat_cols = df_clean.select_dtypes(include=["object", "category"]).columns.tolist()
+
+    summary_data = {
+        "Total filas": [total_rows],
+        "Total columnas": [total_cols],
+        "Total nulos": [total_nulls],
+        "Porcentaje nulos": [f"{percent_nulls:.2f}%"],
+        "Columnas numéricas": [len(num_cols)],
+        "Columnas categóricas": [len(cat_cols)],
+        "Promedio global (num)": [df_clean[num_cols].mean().mean() if num_cols else "N/A"]
+    }
+
+    st.dataframe(pd.DataFrame(summary_data))
+
     # Mostrar df.info() como tabla
     st.subheader("📐 Estructura del DataFrame")
     df_info = pd.DataFrame({
@@ -108,13 +130,14 @@ if st.button("📊 Ver métricas básicas") and st.session_state.df_clean is not
     })
     st.dataframe(df_info)
 
-    # Nulos
+    # Nulos por columna
     st.subheader("🕳️ Valores nulos por columna")
     st.dataframe(df_clean.isnull().sum().to_frame("Nulos"))
 
-    # Estadísticas
+    # Estadísticas numéricas
     st.subheader("📈 Estadísticas numéricas")
     st.dataframe(df_clean.describe().T)
+
 
 # Botón: Mostrar gráficos
 if st.button("📈 Mostrar gráficos") and st.session_state.df_clean is not None:
@@ -130,17 +153,6 @@ if st.button("📈 Mostrar gráficos") and st.session_state.df_clean is not None
     else:
         st.info("No hay columnas numéricas para graficar.")
 
-    st.subheader("📊 Gráficos de frecuencia por columnas categóricas")
-    cat_cols = st.session_state.df_clean.select_dtypes(include=["object", "category"]).columns.tolist()
-
-    if cat_cols:
-        for col in cat_cols:
-            fig, ax = plt.subplots()
-            st.session_state.df_clean[col].value_counts().head(10).sort_values().plot(kind="barh", ax=ax)
-            ax.set_title(f"Top categorías en {col}")
-            st.pyplot(fig)
-    else:
-        st.info("No hay columnas categóricas para graficar.")
 
 # Mostrar historial de conversación
 if st.session_state.chat_history:
