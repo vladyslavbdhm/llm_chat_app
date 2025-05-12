@@ -34,7 +34,9 @@ uploaded_file = st.file_uploader("📎 Subí un archivo CSV", type="csv")
 if uploaded_file:
     df_raw = pd.read_csv(uploaded_file)
     df_clean = df_raw.dropna()
+
     if len(df_clean) > 100:
+        st.warning("⚠️ El archivo tiene más de 100 filas. Solo se usarán las primeras 100 filas sin nulos para el análisis.")
         df_clean = df_clean.head(100)
 
     st.session_state.df_clean = df_clean
@@ -79,14 +81,24 @@ if st.button("💬 Preguntar"):
 
         messages = [
             SystemMessage(content="""
-Eres un experto en análisis de datos. Vas a recibir una pregunta relacionada con un análisis anterior. Respondé en español, de forma concisa y estructurada.
+Eres un experto en análisis de datos. Vas a recibir una tabla en formato CSV y luego una serie de preguntas del usuario. Debes usar la información del CSV como contexto en todas las respuestas.
+Responde en español, de forma concisa y estructurada.
 """)
         ]
 
+        # Agregar el CSV como primer mensaje si existe
+        if st.session_state.csv_text:
+            csv_snippet = st.session_state.csv_text
+            if len(csv_snippet) > 15000:
+                csv_snippet = csv_snippet[:15000] + "\n... (truncado)"
+            messages.append(HumanMessage(content=f"Datos del archivo (máximo 100 filas):\n{csv_snippet}"))
+
+        # Agregar historial
         for user_msg, ai_msg in st.session_state.chat_history:
             messages.append(HumanMessage(content=user_msg))
             messages.append(HumanMessage(content=ai_msg))
 
+        # Agregar la nueva pregunta
         messages.append(HumanMessage(content=user_question.strip()))
 
         with st.spinner("✍️ Procesando pregunta..."):
@@ -138,7 +150,6 @@ if st.button("📊 Ver métricas básicas") and st.session_state.df_clean is not
     st.subheader("📈 Estadísticas numéricas")
     st.dataframe(df_clean.describe().T)
 
-
 # Botón: Mostrar gráficos
 if st.button("📈 Mostrar gráficos") and st.session_state.df_clean is not None:
     st.subheader("📊 Gráficos de columnas numéricas")
@@ -152,7 +163,6 @@ if st.button("📈 Mostrar gráficos") and st.session_state.df_clean is not None
             st.pyplot(fig)
     else:
         st.info("No hay columnas numéricas para graficar.")
-
 
 # Mostrar historial de conversación
 if st.session_state.chat_history:
